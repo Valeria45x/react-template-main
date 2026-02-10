@@ -88,6 +88,18 @@ function App() {
     setTasks(tasks.filter((task) => !task.completed));
   };
 
+  // FUNCIÓN: Resetear la aplicación (borrar todo con confirmación)
+  const resetApp = () => {
+    if (
+      window.confirm(
+        '⚠️ ¿Seguro que quieres eliminar todas las tareas? Esta acción no se puede deshacer.'
+      )
+    ) {
+      localStorage.removeItem('tasksStorage');
+      setTasks([]);
+    }
+  };
+
   // Ordenar tareas por prioridad (alta primero)
   const sortedTasks = [...tasks].sort(
     (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
@@ -118,6 +130,16 @@ function App() {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Total: {tasks.length} tareas | Completadas: {tasks.filter((t) => t.completed).length}
+        </div>
+
+        {/* Botón para resetear la aplicación */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={resetApp}
+            className="text-sm text-gray-500 hover:text-red-600 underline transition-colors"
+          >
+            🗑️ Resetear aplicación (borrar todo)
+          </button>
         </div>
       </div>
     </div>
