@@ -36,12 +36,25 @@ const getInitialTasks = () => {
 function App() {
   // ESTADO: La lista de tareas (inicialización lazy desde localStorage)
   const [tasks, setTasks] = useState(getInitialTasks);
+  // ESTADO: Indicador visual de guardado
+  const [savedIndicator, setSavedIndicator] = useState(false);
 
   // EFECTO: Guardar tareas en localStorage cada vez que cambien
   useEffect(() => {
     try {
       localStorage.setItem('tasksStorage', JSON.stringify(tasks));
       console.log('✅ Tareas guardadas en localStorage:', tasks.length);
+
+      // Mostrar indicador de guardado
+      setSavedIndicator(true);
+
+      // Ocultar después de 2 segundos
+      const timer = setTimeout(() => {
+        setSavedIndicator(false);
+      }, 2000);
+
+      // Cleanup: cancelar timer si el componente se desmonta o si tasks cambia antes
+      return () => clearTimeout(timer);
     } catch (error) {
       console.error('❌ Error al guardar tareas:', error);
     }
@@ -83,6 +96,13 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
+        {/* Indicador de guardado automático */}
+        {savedIndicator && (
+          <div className="mb-4 p-2 bg-green-100 border border-green-300 text-green-800 rounded-lg text-center text-sm animate-pulse">
+            ✅ Cambios guardados automáticamente
+          </div>
+        )}
+
         <h1 className="text-4xl font-bold text-center text-indigo-900 mb-8">
           📝 Mi lista de tareas
         </h1>
