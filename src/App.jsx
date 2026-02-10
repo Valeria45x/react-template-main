@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import TaskList from './components/TaskList';
 import AddTaskInput from './components/AddTaskInput';
 import ClearCompletedButton from './components/ClearCompletedButton';
+import ResetAppButton from './components/ResetAppButton';
+import StatusBar from './components/StatusBar';
 
 // Orden de prioridades para ordenar tareas
 const priorityOrder = { alta: 1, media: 2, baja: 3 };
@@ -88,16 +90,10 @@ function App() {
     setTasks(tasks.filter((task) => !task.completed));
   };
 
-  // FUNCIÓN: Resetear la aplicación (borrar todo con confirmación)
+  // FUNCIÓN: Resetear la aplicación (borrar todo)
   const resetApp = () => {
-    if (
-      window.confirm(
-        '⚠️ ¿Seguro que quieres eliminar todas las tareas? Esta acción no se puede deshacer.'
-      )
-    ) {
-      localStorage.removeItem('tasksStorage');
-      setTasks([]);
-    }
+    localStorage.removeItem('tasksStorage');
+    setTasks([]);
   };
 
   // Ordenar tareas por prioridad (alta primero)
@@ -128,19 +124,9 @@ function App() {
           onClear={clearCompleted}
         />
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Total: {tasks.length} tareas | Completadas: {tasks.filter((t) => t.completed).length}
-        </div>
+        <StatusBar tasks={tasks} />
 
-        {/* Botón para resetear la aplicación */}
-        <div className="mt-4 text-center">
-          <button
-            onClick={resetApp}
-            className="text-sm text-gray-500 hover:text-red-600 underline transition-colors"
-          >
-            🗑️ Resetear aplicación (borrar todo)
-          </button>
-        </div>
+        <ResetAppButton onReset={resetApp} />
       </div>
     </div>
   );
