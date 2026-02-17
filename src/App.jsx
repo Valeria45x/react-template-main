@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import TaskList from './components/TaskList';
 import AddTaskInput from './components/AddTaskInput';
 import ClearCompletedButton from './components/ClearCompletedButton';
@@ -55,16 +55,26 @@ function App() {
   };
 
   // FUNCIÓN: Eliminar una tarea
-  const removeTask = (id) => {
-    setTasks(tasks.filter((task) => task.id !== id));
-  };
+  // useCallback: Estabiliza la referencia de la función entre renders
+  // Justificación: TaskItem usa React.memo, si removeTask cambiara en cada render,
+  // todos los TaskItems se re-renderizarían aunque sus props (task) no cambien
+  const removeTask = useCallback(
+    (id) => {
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    },
+    [setTasks]
+  );
 
   // FUNCIÓN: Alternar completado de tarea
-  const toggleTask = (id) => {
-    setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
-    );
-  };
+  // useCallback: Misma justificación que removeTask
+  const toggleTask = useCallback(
+    (id) => {
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
+      );
+    },
+    [setTasks]
+  );
 
   // FUNCIÓN: Eliminar todas las tareas completadas
   const clearCompleted = () => {
@@ -77,18 +87,21 @@ function App() {
     setTasks([]);
   };
 
-  // FILTRAR: Tareas que coincidan con la búsqueda (usando el valor debounced)
-  // Si hideCompleted es true, también excluimos las completadas
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.text.toLowerCase().includes(debouncedSearch.toLowerCase());
-    const shouldShow = hideCompleted ? !task.completed : true;
-    return matchesSearch && shouldShow;
-  });
+  // LISTA VISIBLE: Combinamos filtrado + ordenamiento en un solo useMemo
+  // useMemo: Solo recalcula cuando cambian las dependencias
+  // Justificación: Filtrar y ordenar son operaciones O(n log n) que no necesitan
+  // ejecutarse en cada render si tasks, debouncedSearch o hideCompleted no cambiaron
+  const visibleTasks = useMemo(() => {
+    // 1. Filtrar por búsqueda y estado de completado
+    const filtered = tasks.filter((task) => {
+      const matchesSearch = task.text.toLowerCase().includes(debouncedSearch.toLowerCase());
+      const shouldShow = hideCompleted ? !task.completed : true;
+      return matchesSearch && shouldShow;
+    });
 
-  // ORDENAR: Tareas filtradas por prioridad (alta primero)
-  const sortedTasks = [...filteredTasks].sort(
-    (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
-  );
+    // 2. Ordenar por prioridad (alta primero)
+    return [...filtered].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }, [tasks, debouncedSearch, hideCompleted]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
@@ -112,7 +125,7 @@ function App() {
           {/* Mostrar info de búsqueda si hay término */}
           {debouncedSearch && (
             <p className="text-sm text-gray-500 mt-1">
-              Mostrando {filteredTasks.length} de {tasks.length} tareas
+              Mostrando {visibleTasks.length} de {tasks.length} tareas
             </p>
           )}
         </div>
@@ -135,7 +148,7 @@ function App() {
           )}
         </div>
 
-        <TaskList tasks={sortedTasks} onRemove={removeTask} onToggle={toggleTask} />
+        <TaskList tasks={visibleTasks} onRemove={removeTask} onToggle={toggleTask} />
 
         <ClearCompletedButton
           count={tasks.filter((t) => t.completed).length}
