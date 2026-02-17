@@ -1,20 +1,29 @@
-import { useState } from "react";
+import { useState, useRef } from 'react';
 
 function AddTaskInput({ onAdd }) {
-  const [inputValue, setInputValue] = useState("");
-  const [priority, setPriority] = useState("media"); // Estado para prioridad
+  const [inputValue, setInputValue] = useState('');
+  const [priority, setPriority] = useState('media'); // Estado para prioridad
+
+  // REF: Referencia al input de texto para poder hacer focus programáticamente
+  // useRef NO causa re-renders cuando cambia (a diferencia de useState)
+  const inputRef = useRef(null);
 
   const handleAdd = () => {
     if (inputValue.trim()) {
       onAdd(inputValue, priority); // Pasar la prioridad al padre
-      setInputValue(""); // Limpiar input
-      setPriority("media"); // Reset a prioridad media
+      setInputValue(''); // Limpiar input
+      setPriority('media'); // Reset a prioridad media
+
+      // FOCUS: Devolver el foco al input para seguir añadiendo tareas fácilmente
+      // inputRef.current es el elemento DOM real del input
+      // El ?. es por seguridad si el ref aún no está asignado
+      inputRef.current?.focus();
     }
   };
 
   const handleKeyDown = (e) => {
     // Permitir tecla Enter para añadir tarea (como haría un formulario)
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleAdd();
     }
   };
@@ -27,6 +36,7 @@ function AddTaskInput({ onAdd }) {
             e.target = el elemento DOM que disparó el evento (este input)
             e.target.value = el texto actual escrito en el input */}
         <input
+          ref={inputRef} // Conectar la ref al elemento DOM
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -46,14 +56,14 @@ function AddTaskInput({ onAdd }) {
       <div className="flex items-center gap-2 text-sm">
         <span className="text-gray-600 font-medium">Prioridad:</span>
         <div className="flex gap-2">
-          {["baja", "media", "alta"].map((p) => (
+          {['baja', 'media', 'alta'].map((p) => (
             <button
               key={p}
               onClick={() => setPriority(p)}
               className={`px-3 py-1 rounded-full transition-all ${
                 priority === p
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
               {p.charAt(0).toUpperCase() + p.slice(1)}

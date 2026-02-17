@@ -6,6 +6,7 @@ import ResetAppButton from './components/ResetAppButton';
 import StatusBar from './components/StatusBar';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useDebounce } from './hooks/useDebounce';
+import { useToggle } from './hooks/useToggle';
 
 // Orden de prioridades para ordenar tareas
 const priorityOrder = { alta: 1, media: 2, baja: 3 };
@@ -37,6 +38,10 @@ function App() {
   // DEBOUNCE: Versión "retrasada" del término de búsqueda
   // Solo se actualiza después de 300ms sin cambios (evita filtrar en cada tecla)
   const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // TOGGLE: Controla si ocultamos las tareas completadas
+  // hideCompleted = true → no mostrar tareas marcadas como completadas
+  const [hideCompleted, toggleHideCompleted] = useToggle(false);
 
   // FUNCIÓN: Añadir una nueva tarea con prioridad
   const addTask = (text, priority = 'media') => {
@@ -73,9 +78,12 @@ function App() {
   };
 
   // FILTRAR: Tareas que coincidan con la búsqueda (usando el valor debounced)
-  const filteredTasks = tasks.filter((task) =>
-    task.text.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  // Si hideCompleted es true, también excluimos las completadas
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch = task.text.toLowerCase().includes(debouncedSearch.toLowerCase());
+    const shouldShow = hideCompleted ? !task.completed : true;
+    return matchesSearch && shouldShow;
+  });
 
   // ORDENAR: Tareas filtradas por prioridad (alta primero)
   const sortedTasks = [...filteredTasks].sort(
@@ -106,6 +114,24 @@ function App() {
             <p className="text-sm text-gray-500 mt-1">
               Mostrando {filteredTasks.length} de {tasks.length} tareas
             </p>
+          )}
+        </div>
+
+        {/* Toggle para ocultar/mostrar tareas completadas */}
+        <div className="mb-4 flex items-center justify-between bg-white rounded-lg shadow-sm p-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hideCompleted}
+              onChange={toggleHideCompleted}
+              className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+            />
+            <span className="text-sm text-gray-700">Ocultar tareas completadas</span>
+          </label>
+          {hideCompleted && tasks.some((t) => t.completed) && (
+            <span className="text-xs text-gray-500">
+              ({tasks.filter((t) => t.completed).length} ocultas)
+            </span>
           )}
         </div>
 
